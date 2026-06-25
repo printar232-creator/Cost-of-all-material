@@ -38,4 +38,16 @@ def load_comprehensive_data():
                 "LAOS B/C": {"rm": 5875.00, "pkg": 304.00, "elec": 631.29, "op": 128.71, "total": 6939.00}
             },
             "50kg": {
-                "LAOS (NONG KHAI)": {"rm": 4290.00, "pkg": 2
+                "LAOS (NONG KHAI)": {"rm": 4290.00, "pkg": 250.00, "elec": 631.29, "op": 128.71, "total": 5300.00}
+            },
+            "big bag": {
+                "LAOS B/C": {"rm": 5875.00, "pkg": 160.00, "elec": 631.29, "op": 128.71, "total": 6795.00},
+                "LAOS C/D": {"rm": 4337.50, "pkg": 160.00, "elec": 631.29, "op": 128.71, "total": 5257.50}
+            },
+            "TANK": {
+                "LAOS (NONG KHAI)": {"rm": 4290.00, "pkg": 0.00, "elec": 631.29, "op": 128.71, "total": 5050.00}
+            }
+        },
+        "200 MESH": {
+            "big bag": {
+                "LAOS (NONG KHAI)": {"rm": 4290.00, "pkg": 116.00, "elec": 631.29, "op": 1
