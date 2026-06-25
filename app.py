@@ -15,7 +15,7 @@ with col_h2:
 
 st.divider()
 
-# --- ส่วนที่ 2: สร้างฟอร์มรับค่าตัวเลข (แบ่ง 3 คอลัมน์) ---
+# --- ส่วนที่ 2: ฟอร์มรับข้อมูล (แบ่งเป็น 3 คอลัมน์เพื่อความกระชับในการแคปภาพ) ---
 col1, col2, col3 = st.columns(3)
 
 with col1:
@@ -48,7 +48,7 @@ with col3:
     imp_exp = st.number_input("IMPORT/EXPORT", value=0.000000, format="%.6f")
     commission = st.number_input("COMISSTION", value=0.000000, format="%.6f")
 
-# --- ส่วนที่ 3: คำนวณผลลัพธ์สุทธิ ---
+# --- ส่วนที่ 3: ประมวลผลและคำนวณผลลัพธ์ ---
 all_cost_no_material = (
     maintenance + electricity + water + labour + 
     packaging + oil + brass + imp_exp + commission
@@ -57,4 +57,23 @@ total_cost = calc_mat_cost + all_cost_no_material
 
 st.divider()
 
-# --- ส่วนที่ 4: แสดงผลลัพธ์สร
+# --- ส่วนที่ 4: แสดงสรุปผลลัพธ์แบบเรียงลำดับตาม Excel เพื่อให้แคปภาพได้สวยงาม ---
+st.markdown("### 📋 สรุปรายการต้นทุนสุทธิ")
+
+# 1. แสดงผล ALL COST (NO MATERIAL)
+st.metric(label="ALL COST (NO MATERIAL)", value=f"{all_cost_no_material:,.6f}")
+
+st.write("")
+
+# 2. แสดงผล TOTAL COST แถบสีเหลืองสดเหมือนในตาราง Excel
+label_text = f"TOTAL COST ({package_size})"
+value_text = f"{total_cost:,.6f}"
+
+html_summary_box = f"""
+<div style="background-color: #FFFF00; padding: 15px; border-radius: 4px; border: 1px solid #ccc; text-align: left; padding-left: 20px;">
+    <span style="color: black; font-size: 16px; font-weight: bold; text-transform: uppercase; margin-right: 30px;">{label_text}</span>
+    <span style="color: black; font-size: 28px; font-weight: bold; float: right; padding-right: 20px; line-height: 24px;">{value_text}</span>
+    <div style="clear: both;"></div>
+</div>
+"""
+st.markdown(html_summary_box, unsafe_allow_html=True)
