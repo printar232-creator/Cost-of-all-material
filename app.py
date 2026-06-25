@@ -1,79 +1,110 @@
 import streamlit as st
+import pandas as pd
 
-# 1. ตั้งค่าหน้าจอแบบกว้าง (Wide Layout)
-st.set_page_config(page_title="Cost Calculator", layout="wide")
+# ตั้งค่าหน้าเว็บหน้าตาแอปพลิเคชัน
+st.set_page_config(page_title="AMR Cost Calculator", layout="centered")
 
-st.title("📊 Cost Calculator: LAOS (NONG KHAI)")
-st.divider()
+st.title("📊 ระบบคำนวณและแสดงต้นทุนสินค้า (Cost Breakdown)")
+st.write("เลือกข้อมูลเพื่อแสดงต้นทุนย่อยและต้นทุนรวมของผลิตภัณฑ์")
 
-# --- ส่วนที่ 1: ตั้งค่าบรรจุภัณฑ์ และ % Loss ---
-col_h1, col_h2 = st.columns([2, 1])
-with col_h1:
-    package_size = st.radio("ขนาดบรรจุภัณฑ์ (Package Size):", ["25kg", "50kg"], horizontal=True)
-with col_h2:
-    loss_percentage = st.number_input("% Loss (สูญเสียวัตถุดิบ)", min_value=0.0, max_value=99.9, value=10.0, step=0.1)
+# 1. ฟังก์ชันโหลดข้อมูล (แนะนำให้เปลี่ยน URL เป็นลิงก์ Raw ของ GitHub คุณเอง)
+@st.cache_data
+def load_data():
+    # ตัวอย่างการใส่ค่า Mockup ข้อมูลตามโครงสร้างไฟล์ของคุณ 
+    # หากใช้งานจริงให้เปิดใช้งานบรรทัดด้านล่างนี้แล้วใส่ URL ไฟล์จริงบน GitHub:
+    # url = "https://raw.githubusercontent.com/username/repo/main/cost_data.csv"
+    # return pd.read_csv(url)
+    
+    mock_data = {
+        'product_type': ['M5', 'M5', 'M7', 'M10', 'A45', 'B45', 'C5', 'D45'],
+        'packaging': ['25kg', '50kg', '25kg', '25kg', '25kg', '50kg', '25kg', 'big bag'],
+        'source': ['CHINA', 'LAOS', 'CHINA', 'LAOS', 'CHINA', 'LAOS', 'CHINA', 'LAOS'],
+        'ค่าวัตถุดิบ (Raw Material)': [7718, 6400, 8200, 6400, 7718, 4700, 4290, 3400],
+        'ค่าไฟโรงงาน (Electricity)': [804.95, 431.81, 804.95, 431.81, 631.29, 431.81, 804.95, 631.29],
+        'ค่าซ่อมบำรุง (Maintenance)': [145.78, 302.86, 145.78, 302.86, 145.78, 302.86, 145.78, 145.78],
+        'ค่าแรงฝ่ายผลิต (Labor)': [1587.69, 1850.46, 1587.69, 1850.46, 1587.69, 1850.46, 1587.69, 1587.69],
+        'ค่าบรรจุภัณฑ์และพาเลท (Bag/Pallet)': [479.47, 550.00, 479.47, 479.47, 1202.44, 600.00, 479.47, 160.00]
+    }
+    df = pd.DataFrame(mock_data)
+    return df
 
-st.divider()
+df = load_data()
 
-# --- ส่วนที่ 2: ฟอร์มรับข้อมูล (แบ่งเป็น 3 คอลัมน์เพื่อความกระชับในการแคปภาพ) ---
+# 2. ส่วนของตัวเลือก Filter (Drop-down Selectbox)
+st.subheader("🔍 ระบุเงื่อนไขผลิตภัณฑ์")
+
 col1, col2, col3 = st.columns(3)
 
 with col1:
-    st.markdown("### 🛠 Material Cost")
-    base_material_cost = st.number_input("MATERIAL+CLEAR,TRANSPORT", value=4290.000000, format="%.6f")
-    
-    # คำนวณ Material รวม Loss
-    if loss_percentage < 100:
-        calc_mat_cost = base_material_cost / (1 - (loss_percentage / 100))
-    else:
-        calc_mat_cost = 0.0
-    st.info(f"Mat Cost (+Loss): {calc_mat_cost:,.6f}")
+    product_list = sorted(df['product_type'].unique())
+    selected_product = st.selectbox("1. Type of Product", ["-- กรุณาเลือก --"] + product_list)
+
+# กรอง Packaging ตาม Product ที่เลือก (Dynamic Filter)
+if selected_product != "-- กรุณาเลือก --":
+    filtered_pack = df[df['product_type'] == selected_product]['packaging'].unique()
+    pack_list = sorted(filtered_pack)
+else:
+    pack_list = []
 
 with col2:
-    st.markdown("### ⚡ Utilities & Labor")
-    maintenance = st.number_input("MAINTANANCE", value=120.564156, format="%.6f")
-    electricity = st.number_input("ELECTRICITY", value=335.395700, format="%.6f")
-    water = st.number_input("WATER SECTION", value=0.000000, format="%.6f")
-    labour = st.number_input("LABOUR", value=1587.691604, format="%.6f")
+    selected_pack = st.selectbox("2. Packaging", ["-- กรุณาเลือก --"] + list(pack_list), disabled=(selected_product == "-- กรุณาเลือก --"))
+
+# กรอง Source ตาม Product และ Packaging ที่เลือก
+if selected_product != "-- กรุณาเลือก --" and selected_pack != "-- กรุณาเลือก --":
+    filtered_source = df[(df['product_type'] == selected_product) & (df['packaging'] == selected_pack)]['source'].unique()
+    source_list = sorted(filtered_source)
+else:
+    source_list = []
 
 with col3:
-    st.markdown("### 📦 Others & Packaging")
-    if package_size == "25kg":
-        packaging = st.number_input("PAKAGING (25kg)", value=414.50, format="%.2f")
-    else:
-        packaging = st.number_input("PAKAGING (50kg)", value=476.00, format="%.2f")
+    selected_source = st.selectbox("3. Source", ["-- กรุณาเลือก --"] + list(source_list), disabled=(selected_pack == "-- กรุณาเลือก --"))
+
+st.markdown("---")
+
+# 3. ประมวลผลและแสดงต้นทุนย่อย + ต้นทุนรวม เมื่อเลือกครบ 3 รายการ
+if (selected_product != "-- กรุณาเลือก --" and 
+    selected_pack != "-- กรุณาเลือก --" and 
+    selected_source != "-- กรุณาเลือก --"):
+    
+    # ดึงแถวข้อมูลที่ตรงตามเงื่อนไข
+    result = df[
+        (df['product_type'] == selected_product) & 
+        (df['packaging'] == selected_pack) & 
+        (df['source'] == selected_source)
+    ]
+    
+    if not result.empty:
+        st.success(### รหัสสินค้าที่เลือก: {selected_product} ({selected_pack}) - แหล่งวัตถุดิบ: {selected_source}")
         
-    oil = st.number_input("OIL", value=47.376262, format="%.6f")
-    brass = st.number_input("BRASS", value=22.035870, format="%.6f")
-    imp_exp = st.number_input("IMPORT/EXPORT", value=0.000000, format="%.6f")
-    commission = st.number_input("COMISSTION", value=0.000000, format="%.6f")
-
-# --- ส่วนที่ 3: ประมวลผลและคำนวณผลลัพธ์ ---
-all_cost_no_material = (
-    maintenance + electricity + water + labour + 
-    packaging + oil + brass + imp_exp + commission
-)
-total_cost = calc_mat_cost + all_cost_no_material
-
-st.divider()
-
-# --- ส่วนที่ 4: แสดงสรุปผลลัพธ์แบบเรียงลำดับตาม Excel เพื่อให้แคปภาพได้สวยงาม ---
-st.markdown("### 📋 สรุปรายการต้นทุนสุทธิ")
-
-# 1. แสดงผล ALL COST (NO MATERIAL)
-st.metric(label="ALL COST (NO MATERIAL)", value=f"{all_cost_no_material:,.6f}")
-
-st.write("")
-
-# 2. แสดงผล TOTAL COST แถบสีเหลืองสดเหมือนในตาราง Excel
-label_text = f"TOTAL COST ({package_size})"
-value_text = f"{total_cost:,.6f}"
-
-html_summary_box = f"""
-<div style="background-color: #FFFF00; padding: 15px; border-radius: 4px; border: 1px solid #ccc; text-align: left; padding-left: 20px;">
-    <span style="color: black; font-size: 16px; font-weight: bold; text-transform: uppercase; margin-right: 30px;">{label_text}</span>
-    <span style="color: black; font-size: 28px; font-weight: bold; float: right; padding-right: 20px; line-height: 24px;">{value_text}</span>
-    <div style="clear: both;"></div>
-</div>
-"""
-st.markdown(html_summary_box, unsafe_allow_html=True)
+        # แยกข้อมูลต้นทุนย่อย
+        cost_columns = [
+            'ค่าวัตถุดิบ (Raw Material)', 
+            'ค่าไฟโรงงาน (Electricity)', 
+            'ค่าซ่อมบำรุง (Maintenance)', 
+            'ค่าแรงฝ่ายผลิต (Labor)', 
+            'ค่าบรรจุภัณฑ์และพาเลท (Bag/Pallet)'
+        ]
+        
+        # คำนวณต้นทุนรวมในแถวนั้น
+        sub_costs = result[cost_columns].iloc[0]
+        total_cost = sub_costs.sum()
+        
+        # แสดงผลต้นทุนรวมแบบเน้นย้ำด้วย st.metric
+        st.metric(label="💰 ต้นทุนรวมทั้งหมด (Total Cost / MT)", value=f"{total_cost:,.2f} บาท")
+        
+        # แสดงตารางแจกแจงต้นทุนย่อยๆ เพื่อความชัดเจน
+        st.subheader("📋 รายละเอียดต้นทุนย่อย (Cost Breakdown)")
+        
+        breakdown_df = pd.DataFrame({
+            'รายการต้นทุน': sub_costs.index,
+            'มูลค่า (บาท/ตัน)': sub_costs.values
+        })
+        
+        # ตกแต่ง Format ตัวเลขในตารางให้สวยงาม
+        breakdown_df['มูลค่า (บาท/ตัน)'] = breakdown_df['มูลค่า (บาท/ตัน)'].map('{:,.2f}'.format)
+        st.table(breakdown_df)
+        
+    else:
+        st.warning("❌ ไม่พบข้อมูลต้นทุนที่ตรงกับเงื่อนไขนี้ในระบบ")
+else:
+    st.info("💡 โปรดเลือกเงื่อนไขด้านบนให้ครบทั้ง 3 ช่อง เพื่อเปิดดูรายงานต้นทุน")
